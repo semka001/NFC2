@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запись текста на NFC</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 24px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+        .alert {
+            color: red;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Запись текста на NFC-метку</h2>
+        <textarea id="textInput" placeholder="Введите текст для записи"></textarea>
+        <br>
+        <button onclick="writeToNFC()">Записать на NFC</button>
+        <p id="status">Ожидание... Поднесите метку для записи.</p>
+        <p id="alertMessage" class="alert"></p>
+    </div>
+
+    <script>
+        async function writeToNFC() {
+            if (!("NDEFWriter" in window)) {
+                alert("Ваш браузер не поддерживает Web NFC. Используйте Chrome на Android.");
+                return;
+            }
+
+            try {
+                const text = document.getElementById('textInput').value;
+                if (!text) {
+                    document.getElementById('alertMessage').innerText = "Введите текст для записи в NFC-метку!";
+                    return;
+                }
+
+                document.getElementById('status').innerText = "Записываю на NFC-метку...";
+
+                // Создаем объект NDEFWriter
+                const ndef = new NDEFWriter();
+                
+                // Пытаемся записать текст на NFC-метку
+                await ndef.write(text);  
+                
+                document.getElementById('status').innerText = "Запись успешна! Поднесите NFC-метку для записи другого текста.";
+                document.getElementById('alertMessage').innerText = ""; // Очистка ошибок
+            } catch (error) {
+                console.error("Ошибка записи:", error);
+                // Выводим сообщения об ошибках с уточнением
+                if (error.name === 'NotFoundError') {
+                    document.getElementById('status').innerText = "Ошибка: NFC-метка не найдена. Поднесите метку к устройству.";
+                } else if (error.name === 'AbortError') {
+                    document.getElementById('status').innerText = "Ошибка: Операция была отменена.";
+                } else if (error.message.includes("NFC is not available")) {
+                    document.getElementById('status').innerText = "Ошибка: NFC не доступен на вашем устройстве.";
+                } else {
+                    document.getElementById('status').innerText = "Ошибка записи: " + error.message;
+                }
+                document.getElementById('alertMessage').innerText = error.message; // Показать текст ошибки
+            }
+        }
+    </script>
+</body>
+</html>

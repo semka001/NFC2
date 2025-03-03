@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Чтение</title>
+</head>
+<body>
+    <h2>Сканирование NFC-метки</h2>
+    <button onclick="startNFC()">Сканировать NFC</button>
+    <p id="status">Ожидание...</p>
+
+    <script>
+        async function startNFC() {
+            if (!("NDEFReader" in window)) {
+                alert("Ваш браузер не поддерживает Web NFC. Используйте Chrome на Android.");
+                return;
+            }
+
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();  // Начать сканирование
+
+                document.getElementById("status").innerText = "Поднесите NFC-метку...";
+
+                ndef.onreading = (event) => {
+                    const decoder = new TextDecoder();
+                    let message = "Данные с метки:\n";
+
+                    // Перебираем все записи из метки
+                    for (const record of event.message.records) {
+                        // Выводим тип записи и данные
+                        console.log(record);
+                        if (record.recordType === "text") {
+                            const text = decoder.decode(record.data);
+                            message += `Текст: ${text}\n`;
+                        } else {
+                            message += `Тип: ${record.recordType}, Данные: (не текстовые)\n`;
+                        }
+                    }
+
+                    document.getElementById("status").innerText = message;  // Отобразить считанные данные
+                };
+
+            } catch (error) {
+                document.getElementById("status").innerText = "Ошибка: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
