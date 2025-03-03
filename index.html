@@ -76,31 +76,38 @@
 
     <script>
         async function writeToNFC() {
+            // Проверка, поддерживает ли браузер Web NFC
             if (!("NDEFWriter" in window)) {
                 alert("Ваш браузер не поддерживает Web NFC. Используйте Chrome на Android.");
                 return;
             }
 
             try {
+                // Получаем текст из текстового поля
                 const text = document.getElementById('textInput').value;
+
+                // Проверка, что текст введен
                 if (!text) {
                     document.getElementById('alertMessage').innerText = "Введите текст для записи в NFC-метку!";
                     return;
                 }
 
+                // Обновляем статус
                 document.getElementById('status').innerText = "Записываю на NFC-метку...";
 
                 // Создаем объект NDEFWriter
                 const ndef = new NDEFWriter();
-                
+
                 // Пытаемся записать текст на NFC-метку
-                await ndef.write(text);  
-                
+                await ndef.write(text);
+
+                // Успешная запись
                 document.getElementById('status').innerText = "Запись успешна! Поднесите NFC-метку для записи другого текста.";
                 document.getElementById('alertMessage').innerText = ""; // Очистка ошибок
             } catch (error) {
                 console.error("Ошибка записи:", error);
-                // Выводим сообщения об ошибках с уточнением
+
+                // Обработка разных типов ошибок
                 if (error.name === 'NotFoundError') {
                     document.getElementById('status').innerText = "Ошибка: NFC-метка не найдена. Поднесите метку к устройству.";
                 } else if (error.name === 'AbortError') {
@@ -116,4 +123,3 @@
     </script>
 </body>
 </html>
-
