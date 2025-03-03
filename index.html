@@ -3,47 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Чтение</title>
+    <title>Запись текста на NFC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #status {
+            margin: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Сканирование NFC-метки</h2>
-    <button onclick="startNFC()">Сканировать NFC</button>
-    <p id="status">Ожидание...</p>
+    <h2>Запись текста на NFC-метку</h2>
+    <textarea id="textInput" rows="5" cols="40" placeholder="Введите текст для записи"></textarea>
+    <br>
+    <button onclick="writeToNFC()">Записать на NFC</button>
+    <p id="status">Ожидание... Поднесите метку для записи.</p>
 
     <script>
-        async function startNFC() {
-            if (!("NDEFReader" in window)) {
+        async function writeToNFC() {
+            if (!("NDEFWriter" in window)) {
                 alert("Ваш браузер не поддерживает Web NFC. Используйте Chrome на Android.");
                 return;
             }
 
             try {
-                const ndef = new NDEFReader();
-                await ndef.scan();  // Начать сканирование
+                const text = document.getElementById('textInput').value;
+                if (!text) {
+                    alert("Введите текст для записи в NFC-метку!");
+                    return;
+                }
 
-                document.getElementById("status").innerText = "Поднесите NFC-метку...";
+                document.getElementById('status').innerText = "Записываю на NFC-метку...";
 
-                ndef.onreading = (event) => {
-                    const decoder = new TextDecoder();
-                    let message = "Данные с метки:\n";
-
-                    // Перебираем все записи из метки
-                    for (const record of event.message.records) {
-                        // Выводим тип записи и данные
-                        console.log(record);
-                        if (record.recordType === "text") {
-                            const text = decoder.decode(record.data);
-                            message += `Текст: ${text}\n`;
-                        } else {
-                            message += `Тип: ${record.recordType}, Данные: (не текстовые)\n`;
-                        }
-                    }
-
-                    document.getElementById("status").innerText = message;  // Отобразить считанные данные
-                };
-
+                // Создаем объект NDEFWriter
+                const ndef = new NDEFWriter();
+                
+                // Пытаемся записать текст на NFC-метку
+                await ndef.write(text);  
+                
+                document.getElementById('status').innerText = "Запись успешна! Поднесите NFC-метку для записи другого текста.";
             } catch (error) {
-                document.getElementById("status").innerText = "Ошибка: " + error.message;
+                console.error("Ошибка записи:", error);
+                // Выводим сообщения об ошибках с уточнением
+                if (error.name === 'NotFoundError') {
+                    document.getElementById('status').innerText = "Ошибка: NFC-метка не найдена. Поднесите метку к устройству.";
+                } else if (error.name === 'AbortError') {
+                    document.getElementById('status').innerText = "Ошибка: Операция была отменена.";
+                } else if (error.message.includes("NFC is not available")) {
+                    document.getElementById('status').innerText = "Ошибка: NFC не доступен на вашем устройстве.";
+                } else {
+                    document.getElementById('status').innerText = "Ошибка записи: " + error.message;
+                }
             }
         }
     </script>
